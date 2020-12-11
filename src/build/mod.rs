@@ -12,10 +12,19 @@ use std::process::Command;
 pub fn build_target(target: &Target) -> Result<String, failure::Error> {
     let target_type = &target.target_type;
     match target_type {
-        TargetType::JavaScript => {
-            let msg = "JavaScript project found. Skipping unnecessary build!".to_string();
-            Ok(msg)
-        }
+        TargetType::JavaScript => match &target.builder_config {
+            None => {
+                let msg = "JavaScript project found. Skipping unnecessary build!".to_string();
+                Ok(msg)
+            }
+            Some(config) => {
+                if config.build_command().spawn()?.wait()?.success() {
+                    Ok(String::from("Build completed successfully!"))
+                } else {
+                    Ok(String::from("No build command specified, skipping build."))
+                }
+            }
+        },
         TargetType::Rust => {
             let _ = which::which("rustc").map_err(|e| {
                 failure::format_err!(
@@ -44,21 +53,6 @@ pub fn build_target(target: &Target) -> Result<String, failure::Error> {
                 Ok(msg)
             }
             Err(e) => Err(e),
-        },
-
-        TargetType::Bundler => match &target.bundle_config {
-            None => Err(failure::err_msg("Please specify bundler options!")),
-            Some(config) => {
-                if config.build_command().spawn()?.wait()?.success() {
-                    let input = &config.output_dir()?;
-                    Ok(String::from("ok"))
-                } else {
-                    Err(failure::format_err!(
-                        "Command `{:?}` exited with non-zero exit code!",
-                        config.build_command()
-                    ))
-                }
-            }
         },
     }
 }
