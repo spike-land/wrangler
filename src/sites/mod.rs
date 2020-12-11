@@ -319,6 +319,7 @@ mod tests {
             target_type: TargetType::JavaScript,
             webpack_config: None,
             site: Some(site),
+            bundle_config: None,
             vars: None,
         }
     }

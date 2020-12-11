@@ -1,3 +1,4 @@
+mod bundle;
 mod dev;
 mod environment;
 mod kv_namespace;
@@ -8,6 +9,7 @@ mod target;
 mod target_type;
 mod triggers;
 
+pub use bundle::Bundle;
 pub use environment::Environment;
 pub use kv_namespace::{ConfigKvNamespace, KvNamespace};
 pub use manifest::Manifest;
