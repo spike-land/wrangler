@@ -13,7 +13,7 @@ const BUILD_COMMAND: &str = "npm run build";
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
-pub struct Bundle {
+pub struct Builder {
     // are these renames necessary? I'm not super well versed in serde
     // so i'm not sure how the annotations work
     #[serde(rename = "build_command")]
@@ -24,7 +24,7 @@ pub struct Bundle {
     src_dir: Option<PathBuf>,
 }
 
-impl Bundle {
+impl Builder {
     fn dir_or_default(dir: &Option<PathBuf>, default: &str, dirname: &str) -> PathBuf {
         match dir {
             Some(path) => path.to_owned(),
@@ -42,7 +42,7 @@ impl Bundle {
 
     pub fn output_dir(&self) -> Result<PathBuf, std::io::Error> {
         let current_dir = env::current_dir()?;
-        let output_dir = current_dir.join(Bundle::dir_or_default(
+        let output_dir = current_dir.join(Builder::dir_or_default(
             &self.output_dir,
             OUTPUT_DIR,
             "output dir",
@@ -52,7 +52,7 @@ impl Bundle {
 
     pub fn src_dir(&self) -> Result<PathBuf, std::io::Error> {
         let current_dir = env::current_dir()?;
-        let src_dir = current_dir.join(Bundle::dir_or_default(&self.src_dir, SRC_DIR, "src dir"));
+        let src_dir = current_dir.join(Builder::dir_or_default(&self.src_dir, SRC_DIR, "src dir"));
         Ok(src_dir)
     }
 
