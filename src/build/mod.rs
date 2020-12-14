@@ -18,7 +18,8 @@ pub fn build_target(target: &Target) -> Result<String, failure::Error> {
                 Ok(msg)
             }
             Some(config) => {
-                if config.build_command().spawn()?.wait()?.success() {
+                if let Some(mut command) = config.build_command() {
+                    command.spawn()?.wait()?.success();
                     Ok(String::from("Build completed successfully!"))
                 } else {
                     Ok(String::from("No build command specified, skipping build."))

@@ -58,7 +58,7 @@ pub fn watch_and_build(
                     }
                     Some(config) => {
                         watcher
-                            .watch(config.src_dir()?, notify::RecursiveMode::Recursive)
+                            .watch(config.src_dir, notify::RecursiveMode::Recursive)
                             .unwrap();
 
                         let mut is_first = true;

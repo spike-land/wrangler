@@ -292,13 +292,13 @@ impl Manifest {
             target_type,                                 // Top level
             account_id: self.account_id.clone(),         // Inherited
             webpack_config: self.webpack_config.clone(), // Inherited
+            builder_config: self.builder_config.clone(), // Inherited
             // importantly, the top level name will be modified
             // to include the name of the environment
             name: self.name.clone(), // Inherited
             kv_namespaces: get_namespaces(self.kv_namespaces.clone(), preview)?, // Not inherited
             site: self.site.clone(), // Inherited
             vars: self.vars.clone(), // Not inherited
-            builder_config: self.builder_config.clone(), // lol idk what this inherit stuff means
         };
 
         let environment = self.get_environment(environment_name)?;
@@ -310,6 +310,9 @@ impl Manifest {
             }
             if let Some(webpack_config) = &environment.webpack_config {
                 target.webpack_config = Some(webpack_config.clone());
+            }
+            if let Some(builder_config) = &environment.builder_config {
+                target.builder_config = Some(builder_config.clone());
             }
 
             // don't inherit kv namespaces because it is an anti-pattern to use the same namespaces across multiple environments

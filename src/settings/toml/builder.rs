@@ -4,84 +4,64 @@ use std::process::Command;
 
 use serde::{Deserialize, Serialize};
 
-use crate::terminal::emoji;
 use crate::terminal::message::{Message, StdOut};
+
+use super::ScriptFormat;
 
 const OUTPUT_DIR: &str = "dist";
 const SRC_DIR: &str = "src";
-const BUILD_COMMAND: &str = "npm run build";
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Builder {
-    // are these renames necessary? I'm not super well versed in serde
-    // so i'm not sure how the annotations work
-    #[serde(rename = "build_command")]
+    #[serde(alias = "build-command")]
     build_command: Option<String>,
-    #[serde(rename = "output_dir")]
-    output_dir: Option<PathBuf>,
-    #[serde(rename = "src_dir")]
-    src_dir: Option<PathBuf>,
+    #[serde(default = "output_dir")]
+    pub output_dir: PathBuf,
+    pub upload_format: ScriptFormat,
+    #[serde(default = "src_dir")]
+    pub src_dir: PathBuf,
+}
+
+fn default_warning(field: &str, default: &str) {
+    StdOut::warn(&format!(
+        "{} not specified, falling back to {}",
+        field, default
+    ));
+}
+
+fn output_dir() -> PathBuf {
+    default_warning("output dir", OUTPUT_DIR);
+    let current_dir = env::current_dir().unwrap();
+    current_dir.join(OUTPUT_DIR)
+}
+
+fn src_dir() -> PathBuf {
+    default_warning("src dir", SRC_DIR);
+    let current_dir = env::current_dir().unwrap();
+    current_dir.join(SRC_DIR)
 }
 
 impl Builder {
-    fn dir_or_default(dir: &Option<PathBuf>, default: &str, dirname: &str) -> PathBuf {
-        match dir {
-            Some(path) => path.to_owned(),
-            None => {
-                StdOut::warn(&format!(
-                    "{} {} not specified, falling back to {}",
-                    emoji::WARN,
-                    dirname,
-                    default
-                ));
-                PathBuf::from(default)
-            }
-        }
-    }
+    pub fn build_command(&self) -> Option<Command> {
+        if let Some(cmd) = &self.build_command {
+            let args: Vec<&str> = cmd.split_whitespace().collect();
 
-    pub fn output_dir(&self) -> Result<PathBuf, std::io::Error> {
-        let current_dir = env::current_dir()?;
-        let output_dir = current_dir.join(Builder::dir_or_default(
-            &self.output_dir,
-            OUTPUT_DIR,
-            "output dir",
-        ));
-        Ok(output_dir)
-    }
+            let command = if cfg!(target_os = "windows") {
+                let mut c = Command::new("cmd");
+                c.arg("/C").args(args.as_slice());
+                c
+            } else {
+                let mut c = Command::new(args[0]);
+                if args.len() > 1 {
+                    c.args(&args[1..]);
+                }
+                c
+            };
 
-    pub fn src_dir(&self) -> Result<PathBuf, std::io::Error> {
-        let current_dir = env::current_dir()?;
-        let src_dir = current_dir.join(Builder::dir_or_default(&self.src_dir, SRC_DIR, "src dir"));
-        Ok(src_dir)
-    }
-
-    pub fn build_command(&self) -> Command {
-        let args_string = match &self.build_command {
-            Some(cmd) => cmd.to_owned(),
-            None => {
-                StdOut::warn(&format!(
-                    "{} build command not specified, falling back to {}",
-                    emoji::WARN,
-                    BUILD_COMMAND
-                ));
-                BUILD_COMMAND.to_string()
-            }
-        };
-        let args: Vec<&str> = args_string.split_whitespace().collect();
-
-        let command = if cfg!(target_os = "windows") {
-            let mut c = Command::new("cmd");
-            c.arg("/C").args(args.as_slice());
-            c
+            Some(command)
         } else {
-            let mut c = Command::new(args[0]);
-            if args.len() > 1 {
-                c.args(&args[1..]);
-            }
-            c
-        };
-
-        command
+            None
+        }
     }
 }
