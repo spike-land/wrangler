@@ -14,11 +14,14 @@ pub fn build_target(target: &Target) -> Result<String, failure::Error> {
     match target_type {
         TargetType::JavaScript => match &target.builder_config {
             None => {
-                let msg = "JavaScript project found. Skipping unnecessary build!".to_string();
+                let msg = "Basic JavaScript project found. Skipping unnecessary build!".to_string();
                 Ok(msg)
             }
             Some(config) => {
                 if let Some(mut command) = config.build_command() {
+                    StdErr::working(
+                        format!("Running {}", config.build_command.as_ref().unwrap()).as_ref(),
+                    );
                     command.spawn()?.wait()?.success();
                     Ok(String::from("Build completed successfully!"))
                 } else {
@@ -41,6 +44,7 @@ pub fn build_target(target: &Target) -> Result<String, failure::Error> {
             let command = command(&args, &binary_path);
             let command_name = format!("{:?}", command);
 
+            StdErr::working("Compiling your project to WebAssembly...");
             commands::run(command, &command_name)?;
             let msg = "Build succeeded".to_string();
             Ok(msg)
@@ -59,8 +63,6 @@ pub fn build_target(target: &Target) -> Result<String, failure::Error> {
 }
 
 pub fn command(args: &[&str], binary_path: &PathBuf) -> Command {
-    StdErr::working("Compiling your project to WebAssembly...");
-
     let mut c = if cfg!(target_os = "windows") {
         let mut c = Command::new("cmd");
         c.arg("/C");

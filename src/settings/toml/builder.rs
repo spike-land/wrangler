@@ -14,8 +14,7 @@ const SRC_DIR: &str = "src";
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Builder {
-    #[serde(alias = "build-command")]
-    build_command: Option<String>,
+    pub build_command: Option<String>,
     #[serde(default = "output_dir")]
     pub output_dir: PathBuf,
     pub upload_format: ScriptFormat,

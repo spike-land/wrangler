@@ -29,10 +29,9 @@ pub fn watch_and_build(
 ) -> Result<(), failure::Error> {
     let target_type = &target.target_type;
     let builder_config = target.builder_config.clone();
-    // TODO(cleanup): better way to please the compiler so the js watcher thread can own it's target?
-    let jstarget = target.clone();
     match target_type {
         TargetType::JavaScript => {
+            let target = target.clone();
             thread::spawn::<_, Result<(), failure::Error>>(move || {
                 let (watcher_tx, watcher_rx) = mpsc::channel();
                 let mut watcher = notify::watcher(watcher_tx, Duration::from_secs(1))?;
@@ -71,7 +70,7 @@ pub fn watch_and_build(
                                         StdOut::info("Ignoring stale first change");
                                         continue;
                                     } else {
-                                        let output = build_target(&jstarget).unwrap();
+                                        let output = build_target(&target).unwrap();
                                         StdOut::success(&format!("{}\nUploading...", output));
                                     }
                                 }
